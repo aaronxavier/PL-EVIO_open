@@ -33,77 +33,74 @@ Furthermore, we demonstrate the effectiveness of our pipeline through onboard cl
 
 
 ## 1. Prerequisites
-1.1 Ubuntu 20.04 with ROS Noetic.
+### 1.1 ROS2 environment
+- Ubuntu 22.04 + ROS2 Humble (recommended), or another ROS2 distro with equivalent APIs.
+- CMake toolchain and colcon.
 
+### 1.2 Core third-party dependencies
+- Ceres Solver (project was developed around 1.14.0; see [Ceres Installation](http://ceres-solver.org/installation.html)).
+- OpenCV and Eigen.
+- The repository contains dependency wrappers under `dependences/` used by the original project.
 
-1.2 Ceres Solver Follow [Ceres Installation](http://ceres-solver.org/installation.html), remember to make install and use the version 1.14.0 ([Download Link](dependences/ceres-solver-1.14.0.zip)).
+### 1.3 ROS2 packages included in this port
+- Core pipeline: `camera_model`, `feature_tracker`, `evio_estimator`, `pose_graph`
+- New ROS2 support packages: `dvs_msgs`, `event_packet_decoder`
 
-
-1.3 we use catkin build, and all the dependency files are stored within the folder `dependences`.
-
-## 2. Build
+## 2. Build (ROS2)
 
 ```sh
-# rm -rf ~/.catkin_tools #if you have another catkin build workspace
-mkdir -p catkin_ws_evio/src
-cd catkin_ws_evio
-catkin config --init --mkdirs --extend /opt/ros/noetic --merge-devel --cmake-args -DCMAKE_BUILD_TYPE=Release
-cd ~/catkin_ws_evio/src
+mkdir -p ~/evio2_ws/src
+cd ~/evio2_ws/src
 git clone git@github.com:ERGlab/PLEVIO.git --recursive
+
+cd ~/evio2_ws
+source /opt/ros/humble/setup.bash
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
 ```
 
-You should modifie your `.bashrc` file through `gedit ~/.bashrc`, add the following codes in it:
+Optional convenience alias:
 
 ```sh
-source ~/catkin_ws_evio/devel/setup.bash
-alias pleviobuild='cd ~/catkin_ws_evio/src && catkin build evio_estimator feature_tracker pose_graph -DCMAKE_BUILD_TYPE=Release -j8'
+alias plevio2build='cd ~/evio2_ws && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release'
 ```
 
-After that, run the `source ~/.bashrc ` and `pleviobuild` command in your terminal.
+## 3. Run on ROS2
+We have released rosbag datasets for evaluating PL-EVIO. Dataset introductions are on this
+[page](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM#Dataset-for-monocular-evio), and
+comparison-result bags are available [here](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM/blob/main/Results_for_comparison.md).
 
-## 3. Run on Dataset
-We have released all the rosbag files for evaluating PL-EVIO, with the introduction of these datasets can be found on this [page](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM#Dataset-for-monocular-evio).
-</br>
-For the convenience of the community, we also release the raw results of our methods in the form of rosbag ([link](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM/blob/main/Results_for_comparison.md)). 
-
-
-<!-- ******************************************************* -->
-### 3.1 Run on Stereo HKU-dataset
-#### 3.1.1 Download our rosbag files ([Stereo HKU-dataset](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM#Dataset-for-stereo-evio))
-
-#### 3.1.2 Run our examples
-After you have downloaded our bag files, you can now run our example:
+### 3.1 Example: DAVIS346 online pipeline (ROS2)
+Use the ROS2 launch file added in this port:
 
 ```sh
-roslaunch evio_estimator plevio_stereo_hku.launch 
-rosbag play --pause --clock ~/dataset/HKU_aggressive_small_flip.bag
+source ~/evio2_ws/install/setup.bash
+ros2 launch evio_estimator plevio_davis346.launch.py
 ```
 
-
-<!-- ******************************************************* -->
-### 3.2 Run on Mono HKU-dataset
-#### 3.3.1 Download our rosbag files ([Mono HKU-dataset](https://github.com/arclab-hku/Event_based_VO-VIO-SLAM#Dataset-for-monocular-evio))
-
-#### 3.3.2 Run vicon_hdr4 as examples
-After you have downloaded our bag files, you can now run:
+Default config path in the launch file points to:
 
 ```sh
-roslaunch evio_estimator plevio_mono_hku.launch 
-rosbag play --pause --clock ~/dataset/vicon_hdr4.bag
+config/ros2_davis346/davis346.yaml
 ```
 
-
-<!-- ******************************************************* -->
-### 3.3 Run on DAVIS240C dataset
-#### 3.3.1 Download rosbag files ([davis240c](https://rpg.ifi.uzh.ch/davis_data.html))
-
-#### 3.3.2 Run boxes_translation as examples
-After you have downloaded the bag files, you can now run:
+If your workspace path differs, pass launch arguments:
 
 ```sh
-roslaunch evio_estimator plevio_davis240c.launch 
-rosbag play --pause --clock ~/dataset/boxes_translation.bag
+ros2 launch evio_estimator plevio_davis346.launch.py \
+  config_file:=/path/to/PLEVIO/config/ros2_davis346/davis346.yaml \
+  vins_folder:=/path/to/PLEVIO/
 ```
+
+### 3.2 Event packet decode standalone (ROS2)
+
+```sh
+source ~/evio2_ws/install/setup.bash
+ros2 launch event_packet_decoder event_packet_decoder.launch.py
+```
+
+### 3.3 Legacy ROS1 launch files
+Some ROS1 launch files are still kept in the repository for reference. They require a ROS1 setup and are not part of the ROS2 runtime flow above.
 
 ### 3.4 Run on Your Event Camera
 * We recommend to follow the instruction on ([DVS-IMU Calibration and Synchronization](https://arclab-hku.github.io/ecmd/calibration/)) to calibrate your sensors.
