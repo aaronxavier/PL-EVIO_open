@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://download.ros.org/schema/package_format3.xsd"?>
+<package format="3">
+  <name>event_packet_decoder</name>
+  <version>1.0.0</version>
+  <description>
+    Decodes event_camera_msgs/EventPacket (as published by libcaer_driver for the
+    DAVIS346) into dvs_msgs/EventArray for consumption by PL-EVIO's feature_tracker.
+  </description>
+  <maintainer email="aaronxavier999@gmail.com">PL-EVIO</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>event_camera_msgs</depend>
+  <depend>event_camera_codecs</depend>
+  <depend>dvs_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

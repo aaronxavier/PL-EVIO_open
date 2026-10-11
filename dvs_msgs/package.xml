@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://download.ros.org/schema/package_format3.xsd"?>
+<package format="3">
+  <name>dvs_msgs</name>
+  <version>2.0.0</version>
+  <description>
+    ROS2 message definitions for decoded DVS/event-camera events, used to feed
+    PL-EVIO's feature_tracker from an event_packet_decoder node. Field-compatible
+    in spirit with the original ROS1 rpg_dvs_ros dvs_msgs package.
+  </description>
+  <maintainer email="aaronxavier999@gmail.com">PL-EVIO</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <depend>std_msgs</depend>
+  <depend>builtin_interfaces</depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
