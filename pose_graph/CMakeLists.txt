@@ -1,32 +1,36 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(pose_graph)
 
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-#-DEIGEN_USE_MKL_ALL")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    nav_msgs
-    camera_model
-    cv_bridge
-    roslib
-    # dvs_msgs      #要加上
-    )
-
-find_package(OpenCV)
-
-
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(camera_model REQUIRED)
+find_package(dvs_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3)
 
-include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS}  ${EIGEN3_INCLUDE_DIR})
-
-catkin_package()
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CERES_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+)
 
 add_executable(pose_graph
     src/pose_graph_node.cpp
@@ -44,5 +48,15 @@ add_executable(pose_graph
     src/ThirdParty/VocabularyBinary.cpp
     )
 
-target_link_libraries(pose_graph ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
-# message("catkin_lib  ${catkin_LIBRARIES}")
+ament_target_dependencies(pose_graph
+  rclcpp std_msgs sensor_msgs geometry_msgs nav_msgs visualization_msgs
+  cv_bridge camera_model dvs_msgs ament_index_cpp)
+target_link_libraries(pose_graph ${OpenCV_LIBS} ${CERES_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS pose_graph
+  RUNTIME DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY support_files
+  DESTINATION share/${PROJECT_NAME})
+
+ament_package()

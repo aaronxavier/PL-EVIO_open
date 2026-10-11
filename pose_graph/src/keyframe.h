@@ -12,11 +12,8 @@
 #include "parameters.h"
 #include "ThirdParty/DBoW/DBoW2.h"
 #include "ThirdParty/DVision/DVision.h"
-//event的消息头文件
-// #include <dvs_msgs/Event.h>
-// #include <dvs_msgs/EventArray.h>
-#include "../../feature_tracker/src/dvs_msgs/Event.h"
-#include "../../feature_tracker/src/dvs_msgs/EventArray.h"
+#include <dvs_msgs/msg/event.hpp>
+#include <dvs_msgs/msg/event_array.hpp>
 
 #define MIN_LOOP_NUM 30 //26 //16 //6 //16 //9 //20 //(回环匹配点的数目要大于25) 判断匹配上的点数目大小够不够
 
@@ -42,7 +39,7 @@ public:
 
 	KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
 			 vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_normal, 
-			 vector<double> &_point_id, int _sequence, dvs_msgs::EventArray &_event_feature_point);//第三个构造函数,创建新的关键帧
+			 vector<double> &_point_id, int _sequence, dvs_msgs::msg::EventArray &_event_feature_point);//第三个构造函数,创建新的关键帧
 
 	KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
 			 vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_normal, 
@@ -57,7 +54,7 @@ public:
 	void computeBRIEFPoint();//额外检测500个新的特征点并计算所有特征点的描述子,为了回环检测
 
 	void savecomputeWindowBRIEFPoint();//保留当前窗口中所有的特征点与描述子
-	void computeBRIEFPointfromevent(const dvs_msgs::EventArray &_event_feature_point);//基于事件特征点来生成feature point
+	void computeBRIEFPointfromevent(const dvs_msgs::msg::EventArray &_event_feature_point);//基于事件特征点来生成feature point
 	
 	//void extractBrief();
 	int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);//计算两个描述子之间的汉明距离

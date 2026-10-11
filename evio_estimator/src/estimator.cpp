@@ -1,5 +1,10 @@
 #include "estimator.h"
 
+static inline double toSec(const builtin_interfaces::msg::Time & stamp)
+{
+    return rclcpp::Time(stamp).seconds();
+}
+
 Estimator::Estimator(): f_manager{Rs}
 {
     ROS_INFO("init begins");
@@ -127,7 +132,7 @@ void Estimator::processIMU(double dt, const Vector3d &linear_acceleration, const
 }
 
 // 原版本
-void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const std_msgs::Header &header)
+void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const std_msgs::msg::Header &header)
 {
     ROS_DEBUG("new image coming ------------------------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
@@ -142,9 +147,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
 
-    ImageFrame imageframe(image, header.stamp.toSec());
+    ImageFrame imageframe(image, toSec(header.stamp));
     imageframe.pre_integration = tmp_pre_integration;//这段时间IMU预积分的信息
-    all_image_frame.insert(make_pair(header.stamp.toSec(), imageframe));
+    all_image_frame.insert(make_pair(toSec(header.stamp), imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
     if(ESTIMATE_EXTRINSIC == 2)//自主估计IMU与camera的外参
@@ -170,10 +175,10 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if (frame_count == WINDOW_SIZE)
         {
             bool result = false;
-            if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
+            if( ESTIMATE_EXTRINSIC != 2 && (toSec(header.stamp) - initial_timestamp) > 0.1)
             {
                result = initialStructure();//视觉与IMU对齐，求取bias，重力，速度，尺度
-               initial_timestamp = header.stamp.toSec();
+               initial_timestamp = toSec(header.stamp);
             }
             if(result)
             {
@@ -229,7 +234,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //多了个线状特征
 void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, //点状特征
                              const map<int, vector<pair<int, Vector4d>>> &lines,//线状特征
-                             const std_msgs::Header &header)
+                             const std_msgs::msg::Header &header)
 {
     ROS_DEBUG("new image coming ------------------------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
@@ -245,9 +250,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
 
-    ImageFrame imageframe(image, header.stamp.toSec());
+    ImageFrame imageframe(image, toSec(header.stamp));
     imageframe.pre_integration = tmp_pre_integration;//这段时间IMU预积分的信息
-    all_image_frame.insert(make_pair(header.stamp.toSec(), imageframe));
+    all_image_frame.insert(make_pair(toSec(header.stamp), imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
     if(ESTIMATE_EXTRINSIC == 2)//自主估计IMU与camera的外参
@@ -273,10 +278,10 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if (frame_count == WINDOW_SIZE)
         {
             bool result = false;
-            if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
+            if( ESTIMATE_EXTRINSIC != 2 && (toSec(header.stamp) - initial_timestamp) > 0.1)
             {
                result = initialStructure();//视觉与IMU对齐，求取bias，重力，速度，尺度
-               initial_timestamp = header.stamp.toSec();
+               initial_timestamp = toSec(header.stamp);
             }
             if(result)
             {
@@ -336,7 +341,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, //图片特征
                              const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &event, //事件点状特征
                              const map<int, vector<pair<int, Vector4d>>> &lines,//事件线状特征
-                             const std_msgs::Header &header)
+                             const std_msgs::msg::Header &header)
 {
     ROS_DEBUG("new image coming ------------------------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
@@ -353,9 +358,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
 
-    ImageFrame imageframe(image, header.stamp.toSec());
+    ImageFrame imageframe(image, toSec(header.stamp));
     imageframe.pre_integration = tmp_pre_integration;//这段时间IMU预积分的信息
-    all_image_frame.insert(make_pair(header.stamp.toSec(), imageframe));
+    all_image_frame.insert(make_pair(toSec(header.stamp), imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
     if(ESTIMATE_EXTRINSIC == 2)//自主估计IMU与camera的外参
@@ -381,11 +386,11 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if (frame_count == WINDOW_SIZE)
         {
             bool result = false;
-            if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
+            if( ESTIMATE_EXTRINSIC != 2 && (toSec(header.stamp) - initial_timestamp) > 0.1)
             {
                result = initialStructure();//视觉与IMU对齐，求取bias，重力，速度，尺度
             //    result=initialStructure_QPEP();
-               initial_timestamp = header.stamp.toSec();
+               initial_timestamp = toSec(header.stamp);
             }
             if(result)
             {
@@ -446,7 +451,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 void Estimator::Setreo_processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, //图片特征
                              const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &event, //事件点状特征
                              const map<int, vector<pair<int, Vector4d>>> &lines,//事件线状特征
-                             const std_msgs::Header &header)
+                             const std_msgs::msg::Header &header)
 {
     ROS_DEBUG("new image coming ------------------------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
@@ -461,9 +466,9 @@ void Estimator::Setreo_processImage(const map<int, vector<pair<int, Eigen::Matri
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
 
-    ImageFrame imageframe(image, header.stamp.toSec());
+    ImageFrame imageframe(image, toSec(header.stamp));
     imageframe.pre_integration = tmp_pre_integration;//这段时间IMU预积分的信息
-    all_image_frame.insert(make_pair(header.stamp.toSec(), imageframe));
+    all_image_frame.insert(make_pair(toSec(header.stamp), imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
     if(ESTIMATE_EXTRINSIC == 2)//自主估计IMU与camera的外参
@@ -489,14 +494,14 @@ void Estimator::Setreo_processImage(const map<int, vector<pair<int, Eigen::Matri
         if (frame_count == WINDOW_SIZE)
         {
             bool result = false;
-            if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
+            if( ESTIMATE_EXTRINSIC != 2 && (toSec(header.stamp) - initial_timestamp) > 0.1)
             {
             //    result = initialStructure();//视觉与IMU对齐，求取bias，重力，速度，尺度
             //    result=initialStructure_QPEP();
                 result = initialStructureStereo();
                 if(!result)
                     result = initialStructure();
-               initial_timestamp = header.stamp.toSec();
+               initial_timestamp = toSec(header.stamp);
             }
             if(result)
             {
@@ -629,7 +634,7 @@ void Estimator::Setreo_processImage(const map<int, vector<pair<int, Eigen::Matri
 //     {
 //         // provide initial guess
 //         cv::Mat r, rvec, t, D, tmp_r;
-//         if((frame_it->first) == Headers[i].stamp.toSec())
+//         if((frame_it->first) == toSec(Headers[i].stamp))
 //         {
 //             frame_it->second.is_key_frame = true;
 //             frame_it->second.R = Q[i].toRotationMatrix() * RIC[0].transpose();
@@ -637,7 +642,7 @@ void Estimator::Setreo_processImage(const map<int, vector<pair<int, Eigen::Matri
 //             i++;
 //             continue;
 //         }
-//         if((frame_it->first) > Headers[i].stamp.toSec())
+//         if((frame_it->first) > toSec(Headers[i].stamp))
 //         {
 //             i++;
 //         }
@@ -786,7 +791,7 @@ bool Estimator::initialStructure()
     {
         // provide initial guess
         cv::Mat r, rvec, t, D, tmp_r;
-        if((frame_it->first) == Headers[i].stamp.toSec())
+        if((frame_it->first) == toSec(Headers[i].stamp))
         {
             frame_it->second.is_key_frame = true;
             frame_it->second.R = Q[i].toRotationMatrix() * RIC[0].transpose();
@@ -794,7 +799,7 @@ bool Estimator::initialStructure()
             i++;
             continue;
         }
-        if((frame_it->first) > Headers[i].stamp.toSec())
+        if((frame_it->first) > toSec(Headers[i].stamp))
         {
             i++;
         }
@@ -935,7 +940,7 @@ bool Estimator::initialStructureStereo()
     {
         // provide initial guess
         cv::Mat r, rvec, t, D, tmp_r;
-        if((frame_it->first) == Headers[i].stamp.toSec())
+        if((frame_it->first) == toSec(Headers[i].stamp))
         {
             frame_it->second.is_key_frame = true;
             frame_it->second.R = Q[i].toRotationMatrix() * RIC[0].transpose();
@@ -945,7 +950,7 @@ bool Estimator::initialStructureStereo()
             i++;
             continue;
         }
-        if((frame_it->first) > Headers[i].stamp.toSec())
+        if((frame_it->first) > toSec(Headers[i].stamp))
         {
             i++;
         }
@@ -1027,11 +1032,11 @@ bool Estimator::visualInitialAlign()
     // change state
     for (int i = 0; i <= frame_count; i++)
     {
-        Matrix3d Ri = all_image_frame[Headers[i].stamp.toSec()].R;
-        Vector3d Pi = all_image_frame[Headers[i].stamp.toSec()].T;
+        Matrix3d Ri = all_image_frame[toSec(Headers[i].stamp)].R;
+        Vector3d Pi = all_image_frame[toSec(Headers[i].stamp)].T;
         Ps[i] = Pi;
         Rs[i] = Ri;
-        all_image_frame[Headers[i].stamp.toSec()].is_key_frame = true;
+        all_image_frame[toSec(Headers[i].stamp)].is_key_frame = true;
     }
 
     VectorXd dep = f_manager.getDepthVector();
@@ -1106,11 +1111,11 @@ bool Estimator::visualInitialAlignWithDepth()
     // change state
     for (int i = 0; i <= frame_count; i++)
     {
-        Matrix3d Ri = all_image_frame[Headers[i].stamp.toSec()].R;
-        Vector3d Pi = all_image_frame[Headers[i].stamp.toSec()].T;
+        Matrix3d Ri = all_image_frame[toSec(Headers[i].stamp)].R;
+        Vector3d Pi = all_image_frame[toSec(Headers[i].stamp)].T;
         Ps[i] = Pi;
         Rs[i] = Ri;
-        all_image_frame[Headers[i].stamp.toSec()].is_key_frame = true;
+        all_image_frame[toSec(Headers[i].stamp)].is_key_frame = true;
     }
 
     VectorXd dep = f_manager.stereo_getDepthVector();
@@ -3884,7 +3889,7 @@ void Estimator::slideWindow()
     TicToc t_margin;
     if (marginalization_flag == MARGIN_OLD)
     {
-        double t_0 = Headers[0].stamp.toSec();
+        double t_0 = toSec(Headers[0].stamp);
         back_R0 = Rs[0];
         back_P0 = Ps[0];
         if (frame_count == WINDOW_SIZE)
@@ -4014,7 +4019,7 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
     // 在滑窗中寻找当前帧，因为VIO送给回环结点的是倒数第三帧，因此，很有可能这个当前帧还在滑窗里
     for(int i = 0; i < WINDOW_SIZE; i++)
     {
-        if(relo_frame_stamp == Headers[i].stamp.toSec())
+        if(relo_frame_stamp == toSec(Headers[i].stamp))
         {
             relo_frame_local_index = i; // 对应滑窗中的第i帧
             relocalization_info = 1;  // 这是一个有效的回环信息

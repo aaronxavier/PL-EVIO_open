@@ -1,5 +1,6 @@
 #include "solve_5pts.h"
 #include "solve_opt.h"
+#include "../parameters.h"
 
 
 namespace cv {

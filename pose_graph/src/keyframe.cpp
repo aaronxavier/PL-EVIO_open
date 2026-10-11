@@ -1,9 +1,4 @@
 #include "keyframe.h"
-//event的消息头文件
-// #include <dvs_msgs/Event.h>
-// #include <dvs_msgs/EventArray.h>
-#include "../../feature_tracker/src/dvs_msgs/Event.h"
-#include "../../feature_tracker/src/dvs_msgs/EventArray.h"
 
 template <typename Derived>
 
@@ -21,7 +16,7 @@ static void reduceVector(vector<Derived> &v, vector<uchar> status)//用于剔除
 
 KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
 		           vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_norm,
-		           vector<double> &_point_id, int _sequence, dvs_msgs::EventArray &_event_feature_point)
+		           vector<double> &_point_id, int _sequence, dvs_msgs::msg::EventArray &_event_feature_point)
 { //时间，第几个窗口，当前关键帧的T与R，跟踪的图片，当前关键帧的地图点（每一个地图点的世界坐标系3D点，相机坐标系下的归一化坐标以及像素坐标+特征点的id），序列
 	time_stamp = _time_stamp;//时间
 	index = _index;//第几个窗口
@@ -230,7 +225,7 @@ void KeyFrame::computeBRIEFPoint()
 }
 
 
-void KeyFrame::computeBRIEFPointfromevent(const dvs_msgs::EventArray &_event_feature_point)
+void KeyFrame::computeBRIEFPointfromevent(const dvs_msgs::msg::EventArray &_event_feature_point)
 {
 	BriefExtractor extractor(BRIEF_PATTERN_FILE.c_str());//读取 构建字典时使用的相同的Brief模板文件，构造BriefExtractor
 	const int fast_th = 20; // corner detector response threshold
@@ -710,9 +705,9 @@ bool KeyFrame::findConnection(KeyFrame* old_kf)///当前帧与传入的回环候
 	            	// cv::resize(loop_match_img, thumbimage, cv::Size(loop_match_img.cols / 2, loop_match_img.rows / 2));//缩小了？
 	    	    	// sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", thumbimage).toImageMsg();
 
-					sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", loop_match_img).toImageMsg();//直接发布
-	                msg->header.stamp = ros::Time(time_stamp);
-	    	    	pub_match_img.publish(msg);//把回环的结果发布出来
+					sensor_msgs::msg::Image::SharedPtr msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", loop_match_img).toImageMsg();//直接发布
+	                msg->header.stamp = secondsToRosTime(time_stamp);
+	    	    	pub_match_img->publish(*msg);//把回环的结果发布出来
 					//保存图片
 					ostringstream path;
 					path <<  "/home/kwanwaipang/evio_result_visualization/loop_image/"
@@ -749,11 +744,11 @@ bool KeyFrame::findConnection(KeyFrame* old_kf)///当前帧与传入的回环候
 	    	             relative_yaw;//获得回环的信息
 	    	if(FAST_RELOCALIZATION)//快速重定位功能
 	    	{
-			    sensor_msgs::PointCloud msg_match_points;
-			    msg_match_points.header.stamp = ros::Time(time_stamp);
+			    sensor_msgs::msg::PointCloud msg_match_points;
+			    msg_match_points.header.stamp = secondsToRosTime(time_stamp);
 			    for (int i = 0; i < (int)matched_2d_old_norm.size(); i++)// 回环帧2d归一化坐标
 			    {
-		            geometry_msgs::Point32 p;
+		            geometry_msgs::msg::Point32 p;
 		            p.x = matched_2d_old_norm[i].x;
 		            p.y = matched_2d_old_norm[i].y;
 		            p.z = matched_id[i];// 对应的VIO地图点的id
@@ -762,7 +757,7 @@ bool KeyFrame::findConnection(KeyFrame* old_kf)///当前帧与传入的回环候
 			    Eigen::Vector3d T = old_kf->T_w_i; // 回环帧的pose
 			    Eigen::Matrix3d R = old_kf->R_w_i;
 			    Quaterniond Q(R);
-			    sensor_msgs::ChannelFloat32 t_q_index;
+			    sensor_msgs::msg::ChannelFloat32 t_q_index;
 			    t_q_index.values.push_back(T.x());
 			    t_q_index.values.push_back(T.y());
 			    t_q_index.values.push_back(T.z());
@@ -772,7 +767,7 @@ bool KeyFrame::findConnection(KeyFrame* old_kf)///当前帧与传入的回环候
 			    t_q_index.values.push_back(Q.z());
 			    t_q_index.values.push_back(index);// 当前帧的索引
 			    msg_match_points.channels.push_back(t_q_index);
-			    pub_match_points.publish(msg_match_points);
+			    pub_match_points->publish(msg_match_points);
 	    	}
 	        return true;
 	    }

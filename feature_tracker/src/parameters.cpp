@@ -44,17 +44,18 @@ double Maximun_lines;//最大数目的线
 int Do_motion_correction=0;//是否去除event的运动畸变
 
 template <typename T>
-T readParam(ros::NodeHandle &n, std::string name)
+T readParam(rclcpp::Node::SharedPtr n, std::string name)
 {
     T ans;
-    if (n.getParam(name, ans))
+    n->declare_parameter<T>(name, T());
+    if (n->get_parameter(name, ans))
     {
         ROS_INFO_STREAM("Loaded " << name << ": " << ans);
     }
     else
     {
         ROS_ERROR_STREAM("Failed to load " << name);
-        n.shutdown();
+        rclcpp::shutdown();
     }
     return ans;
 }
@@ -71,7 +72,7 @@ namespace {
     }
 }
 
-void readParameters(ros::NodeHandle &n)
+void readParameters(rclcpp::Node::SharedPtr n)
 {
     std::string config_file;
     config_file = readParam<std::string>(n, "config_file");

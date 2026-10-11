@@ -39,22 +39,23 @@ bool g_use_stereo_correction = true; // false;
 bool g_opt_verbose = false; 
 
 template <typename T>
-T readParam(ros::NodeHandle &n, std::string name)
+T readParam(rclcpp::Node::SharedPtr n, std::string name)
 {
     T ans;
-    if (n.getParam(name, ans))
+    n->declare_parameter<T>(name, T());
+    if (n->get_parameter(name, ans))
     {
         ROS_INFO_STREAM("Loaded " << name << ": " << ans);
     }
     else
     {
         ROS_ERROR_STREAM("Failed to load " << name);
-        n.shutdown();
+        rclcpp::shutdown();
     }
     return ans;
 }
 
-void readParameters(ros::NodeHandle &n)
+void readParameters(rclcpp::Node::SharedPtr n)
 {
     std::string config_file;
     config_file = readParam<std::string>(n, "config_file");
@@ -165,10 +166,14 @@ void readParameters(ros::NodeHandle &n)
     use_stereo=fsSettings["use_stereo"];
     if(use_stereo)
     {
-        n.param("gravity_norm", nG, nG);
-        n.param("use_sampson_model", g_use_sampson_model, g_use_sampson_model);
-        n.param("use_stereo_correction", g_use_stereo_correction, g_use_stereo_correction);
-        n.param("opt_verbose", g_opt_verbose, g_opt_verbose); 
+        n->declare_parameter<double>("gravity_norm", nG);
+        n->get_parameter("gravity_norm", nG);
+        n->declare_parameter<bool>("use_sampson_model", g_use_sampson_model);
+        n->get_parameter("use_sampson_model", g_use_sampson_model);
+        n->declare_parameter<bool>("use_stereo_correction", g_use_stereo_correction);
+        n->get_parameter("use_stereo_correction", g_use_stereo_correction);
+        n->declare_parameter<bool>("opt_verbose", g_opt_verbose);
+        n->get_parameter("opt_verbose", g_opt_verbose);
         ROS_INFO("parameters.cpp: gravity_norm: %lf", nG);
         std::cout <<"parameters.cpp: "<< (g_use_sampson_model?"Yes use sampson model":"Not use sampson model")<<std::endl;
         std::cout <<"parameters.cpp: "<< (g_use_stereo_correction?"Yes use geometric correction":"Not use geometric correction")<<std::endl;

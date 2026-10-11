@@ -48,7 +48,7 @@ double last_event_time;//在createSAE中产生，记录当前最晚/最新的事
 
 cv::Mat cur_event_mat;//将当前的event数据转换为mat的形式
 
-dvs_msgs::EventArray motion_correct_eventstream;
+dvs_msgs::msg::EventArray motion_correct_eventstream;
 
   // int kSensorWidth_ = 346;
   // int kSensorHeight_= 260;

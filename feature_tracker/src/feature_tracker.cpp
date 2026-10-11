@@ -116,7 +116,7 @@ std::mutex mutex_threads;//创建互斥锁
 // }
 
 
-void good_arc_FeaturesToTrack(const cv::Mat time_surface_map, const dvs_msgs::EventArray &last_event,  vector<cv::Point2f> &n_pts, const vector<cv::Point2f> &_cur_pts, const int maxCorners, const int _MIN_DIST, const cv::Mat event_mask)
+void good_arc_FeaturesToTrack(const cv::Mat time_surface_map, const dvs_msgs::msg::EventArray &last_event,  vector<cv::Point2f> &n_pts, const vector<cv::Point2f> &_cur_pts, const int maxCorners, const int _MIN_DIST, const cv::Mat event_mask)
 {
 
     int ncorners = 0;//计算一下一共检测了多少
@@ -124,15 +124,15 @@ void good_arc_FeaturesToTrack(const cv::Mat time_surface_map, const dvs_msgs::Ev
     cv:: Mat event_mask_666=event_mask.clone();//值为255.0的点不检测
 
     if(maxCorners>0){//当需要检测的时候
-    for (const dvs_msgs::Event& e : last_event.events) { // 获取last_event中的每一个事件
+    for (const dvs_msgs::msg::Event& e : last_event.events) { // 获取last_event中的每一个事件
         if (ncorners>=maxCorners) {//是否大于需要的点，是则退出
                 break;
-            } 
+            }
             else{//没有大于需要的点的数目
                 if(event_mask_666.at<double>(e.y,e.x)!=255.0 ){//判断此处的event_mask是不是不为255.0
                      if(time_surface_map.at<uchar>(e.y,e.x) !=TS_LK_THRESHOLD){//看看对应位置的time surface是否不为128
                          //不在之前的特征点范围内，才开始arc角点检测
-                          if (detector.isCorner(e.ts.toSec(), e.x, e.y, e.polarity)){//判断是否角点（SAE已经在前面更新了）
+                          if (detector.isCorner(e.ts, e.x, e.y, e.polarity)){//判断是否角点（SAE已经在前面更新了）
                                 //若是角点，则放入n_pts中，同时计数
                                 n_pts.push_back(cv::Point2f((float)e.x, (float)e.y));
                                 ncorners++;//计算corners数目，若大于一定值，则退出
@@ -704,17 +704,17 @@ cv::Mat FeatureTracker::getTrackImage_two_line()
     return imTrack_two_line;
 }
 
-void multi_thread_create_SAE(std::vector<dvs_msgs::Event> e, int beginIndex, int length){
+void multi_thread_create_SAE(std::vector<dvs_msgs::msg::Event> e, int beginIndex, int length){
     for(int i=beginIndex;i<beginIndex+length;i++){
-        detector.createSAE(e[i].ts.toSec(),e[i].x,e[i].y,e[i].polarity);
+        detector.createSAE(e[i].ts,e[i].x,e[i].y,e[i].polarity);
     }
 }
 
-void multi_thread_create_SAE_motion(std::vector<dvs_msgs::Event> e, int beginIndex, int length, const Motion_correction_value measurements){
+void multi_thread_create_SAE_motion(std::vector<dvs_msgs::msg::Event> e, int beginIndex, int length, const Motion_correction_value measurements){
     for(int i=beginIndex;i<beginIndex+length;i++){
 
         // double t_0=measurements.second.second.first[0];
-        // double dt_0=e[i].ts.toSec()-t_0;
+        // double dt_0=e[i].ts-t_0;
         // if(dt_0<0){
         //     std::cout<<"比第一个事件要早？？？:"<<dt_0<<std::endl;
         // }
@@ -722,7 +722,7 @@ void multi_thread_create_SAE_motion(std::vector<dvs_msgs::Event> e, int beginInd
         //     std::cout<<"比第一个事件要晚大于0.03:"<<dt_0<<std::endl;
         // }
 
-        detector.createSAE(e[i].ts.toSec(),e[i].x,e[i].y,e[i].polarity,measurements);
+        detector.createSAE(e[i].ts,e[i].x,e[i].y,e[i].polarity,measurements);
     }
 }
 
@@ -1049,7 +1049,7 @@ void process_linefeature(FeatureTracker *this_object, const cv::Mat img_line, bo
     mutex_threads.unlock();
 }
 
-void process_pointfeature(FeatureTracker *this_object,const cv::Mat time_surface, const dvs_msgs::EventArray &last_event, const cv::Mat event_mat)
+void process_pointfeature(FeatureTracker *this_object,const cv::Mat time_surface, const dvs_msgs::msg::EventArray &last_event, const cv::Mat event_mat)
 {
     // forw_pts.clear();//光流检测的特征点
     cv::Mat rightImg;//空的，用来辅助画图而已
@@ -1176,7 +1176,7 @@ void process_pointfeature(FeatureTracker *this_object,const cv::Mat time_surface
 
 
 
-void FeatureTracker::readEvent(const dvs_msgs::EventArray &last_event, double _cur_time)//真正进行跟踪处理
+void FeatureTracker::readEvent(const dvs_msgs::msg::EventArray &last_event, double _cur_time)//真正进行跟踪处理
 {
     cv::Mat img;
     // TicToc t_r;
@@ -1192,8 +1192,8 @@ void FeatureTracker::readEvent(const dvs_msgs::EventArray &last_event, double _c
     detector.cur_event_mat=cv::Mat::zeros(cv::Size(COL, ROW), CV_8UC3);//先清空一下
     // TicToc t_create_sae;
     // 把所有的event放入SAE中(好像采用多线程，帮助不大)
-    for (const dvs_msgs::Event& e:last_event.events){
-        detector.createSAE(e.ts.toSec(), e.x, e.y, e.polarity);
+    for (const dvs_msgs::msg::Event& e:last_event.events){
+        detector.createSAE(e.ts, e.x, e.y, e.polarity);
     }
     // ROS_INFO("time cost of creating SAE: %f", t_create_sae.toc());
     cv::Mat event_mat=detector.cur_event_mat;//获得当前event的mat矩阵
@@ -1381,7 +1381,7 @@ void FeatureTracker::readEvent(const dvs_msgs::EventArray &last_event, double _c
 }
 
 
-void FeatureTracker::readEvent(const dvs_msgs::EventArray &last_event, double _cur_time, const Motion_correction_value measurements)//真正进行跟踪处理
+void FeatureTracker::readEvent(const dvs_msgs::msg::EventArray &last_event, double _cur_time, const Motion_correction_value measurements)//真正进行跟踪处理
 {
     cv::Mat img;
     // TicToc t_r;
@@ -1397,8 +1397,8 @@ void FeatureTracker::readEvent(const dvs_msgs::EventArray &last_event, double _c
 
     // 需要对初始时间进行修正
     Motion_correction_value correct_time_measurement=measurements;
-    correct_time_measurement.second.second.first[0]=last_event.events[0].ts.toSec();//当前事件流的时间进行修正处理
-    correct_time_measurement.second.second.first[1]=last_event.header.stamp.toSec();//当前事件流的时间进行修正处理
+    correct_time_measurement.second.second.first[0]=last_event.events[0].ts;//当前事件流的时间进行修正处理
+    correct_time_measurement.second.second.first[1]=rclcpp::Time(last_event.header.stamp).seconds();//当前事件流的时间进行修正处理
 
     detector.cur_event_mat=cv::Mat::zeros(cv::Size(COL, ROW), CV_8UC3);;//先清空一下
     // TicToc t_create_sae;

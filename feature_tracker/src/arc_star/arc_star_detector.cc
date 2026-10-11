@@ -1,5 +1,4 @@
 #include "arc_star_detector.h"
-#include <ros/ros.h>
 
 std::mutex events_mutex_;//相当于加了一个锁（互斥锁）。每次调用消息前，先锁上，把消息放到buf里面后再解锁
 
@@ -1393,11 +1392,11 @@ void ArcStarDetector::motion_compensation_function(double et, int ex, int ey, bo
 
   // return event;
 
-  dvs_msgs::Event correct_e;
+  dvs_msgs::msg::Event correct_e;
   correct_e.polarity=ep;
   correct_e.x=ex;
   correct_e.y=ey;
-  correct_e.ts=ros::Time().fromSec(et);//把浮点型变成时间戳
+  correct_e.ts=et;//已经是秒为单位的浮点时间戳
 
   // 需要加互斥锁？？
   std::unique_lock<std::mutex> lock(events_mutex_);

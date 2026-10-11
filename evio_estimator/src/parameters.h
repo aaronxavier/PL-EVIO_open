@@ -1,12 +1,27 @@
 #pragma once
 
-#include <ros/ros.h>
+#include <cassert>
+#include <cstdlib>
+#include <rclcpp/rclcpp.hpp>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include "utility/utility.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <fstream>
+
+// Shim so the original ROS1 ROS_DEBUG/INFO/WARN/ERROR(_STREAM)/ASSERT call sites
+// throughout this package's ported algorithm code can stay textually unchanged.
+#define ROS_DEBUG(...) RCLCPP_DEBUG(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_INFO(...) RCLCPP_INFO(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_WARN(...) RCLCPP_WARN(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_ERROR(...) RCLCPP_ERROR(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_DEBUG_STREAM(...) RCLCPP_DEBUG_STREAM(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_INFO_STREAM(...) RCLCPP_INFO_STREAM(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_WARN_STREAM(...) RCLCPP_WARN_STREAM(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_ERROR_STREAM(...) RCLCPP_ERROR_STREAM(rclcpp::get_logger("evio_estimator"), __VA_ARGS__)
+#define ROS_ASSERT(cond) assert(cond)
+#define ROS_BREAK() abort()
 
 #define SQ(x) (((x)*(x)))
 
@@ -60,7 +75,7 @@ extern bool g_opt_verbose;
 const int LINE_MIN_OBS = 2; //2;//最小的线观测需求，原本设置为5，此处为保证给线特征的一致性为2
 
 
-void readParameters(ros::NodeHandle &n);
+void readParameters(rclcpp::Node::SharedPtr n);
 
 enum SIZE_PARAMETERIZATION
 {

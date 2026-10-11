@@ -1,8 +1,20 @@
 #pragma once
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+
+// Shim so the original ROS1 ROS_DEBUG/INFO/WARN/ERROR(_STREAM) call sites throughout
+// this package's ported algorithm code (feature_tracker.cpp, arc_star_detector.cc, ...)
+// can stay textually unchanged.
+#define ROS_DEBUG(...) RCLCPP_DEBUG(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_INFO(...) RCLCPP_INFO(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_WARN(...) RCLCPP_WARN(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_ERROR(...) RCLCPP_ERROR(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_DEBUG_STREAM(...) RCLCPP_DEBUG_STREAM(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_INFO_STREAM(...) RCLCPP_INFO_STREAM(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_WARN_STREAM(...) RCLCPP_WARN_STREAM(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
+#define ROS_ERROR_STREAM(...) RCLCPP_ERROR_STREAM(rclcpp::get_logger("feature_tracker"), __VA_ARGS__)
 
 extern int ROW;
 extern int COL;
@@ -49,4 +61,4 @@ extern Eigen::Matrix3d Eeesntial_matrix;// essential matrix from left and right 
 
 extern int Num_of_thread;//处理大量event数组的时候采用多少个线程
 
-void readParameters(ros::NodeHandle &n);
+void readParameters(rclcpp::Node::SharedPtr n);

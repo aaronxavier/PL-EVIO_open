@@ -9,11 +9,13 @@
 #include <ceres/rotation.h>
 #include <queue>
 #include <assert.h>
-#include <nav_msgs/Path.h>
-#include <geometry_msgs/PointStamped.h>
-#include <nav_msgs/Odometry.h>
+#include <nav_msgs/msg/path.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <stdio.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "keyframe.h"
 #include "utility/tic_toc.h"
 #include "utility/utility.h"
@@ -37,14 +39,14 @@ class PoseGraph
 public:
 	PoseGraph();
 	~PoseGraph();
-	void registerPub(ros::NodeHandle &n);//注册一些发布publisher
+	void registerPub(rclcpp::Node::SharedPtr n);//注册一些发布publisher
 	void addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);//添加关键帧，完成回环检测与闭环过程（进行回环检测，只针对关键帧）处理回环检测的关键函数
 	void loadKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);//载入/加载关键帧
 	void loadVocabulary(std::string voc_path);// 加载二进制词袋库（Brief字典）
 	void updateKeyFrameLoop(int index, Eigen::Matrix<double, 8, 1 > &_loop_info);//更新关键帧的回环信息
 	KeyFrame* getKeyFrame(int index);//（返回索引为index的关键帧）根据index找到对应的KF对象的指针
-	nav_msgs::Path path[10];
-	nav_msgs::Path base_path;
+	nav_msgs::msg::Path path[10];
+	nav_msgs::msg::Path base_path;
 	CameraPoseVisualization* posegraph_visualization;
 	void savePoseGraph();//保存pose graph
 	void loadPoseGraph();//加载先前位姿图
@@ -81,11 +83,11 @@ private:
 	BriefDatabase db;
 	BriefVocabulary* voc;
 
-	ros::Publisher pub_pg_path;
-	ros::Publisher pub_base_path;
-	ros::Publisher pub_pose_graph;
-	ros::Publisher pub_path[10];
-	ros:: Publisher pub_loop_evio;//发布的回环的结果
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_pg_path;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_base_path;
+	rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_pose_graph;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path[10];
+	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_loop_evio;//发布的回环的结果
 };
 
 template <typename T>
