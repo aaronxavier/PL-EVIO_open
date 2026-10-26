@@ -12,21 +12,20 @@ camera_name: camera
 image_width: 346
 image_height: 260
 distortion_parameters:
-   k1: -0.373464
-   k2: 0.139924
-   p1: -0.000309077
-   p2: 0.000635965
+   k1: -0.381734
+   k2: 0.135326
+   p1: 0.002377
+   p2: -0.000005
 projection_parameters:
-   fx: 259.355
-   fy: 259.58
-   cx: 177.005
-   cy: 137.922
-# NOTE: intrinsics above are copied from the original HKU DAVIS346 unit's calibration
-# (config/mono_davis346/davis346.yaml), not this physical camera -- fine for a "does it
-# run" smoke test, needs real recalibration (e.g. Kalibr) before trusting any accuracy.
+   fx: 252.35
+   fy: 253.31
+   cx: 169.06
+   cy: 123.32
+# Intrinsics calibrated on this unit (8x6 board, 25 mm, 41 views pooled, PINHOLE rad-tan, RMS 0.34 px,
+# 32 ms exposure) with tools/calib_web.py; raw result is ~/davis346_calib/result.json on the Jetson.
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 2   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
 #If you choose 0 or 1, you should write down the following matrix.

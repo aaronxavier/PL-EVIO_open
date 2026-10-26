@@ -1,3 +1,4 @@
+#include <chrono>
 #include <stdio.h>
 #include <queue>
 #include <map>
@@ -11,6 +12,7 @@
 #include <sensor_msgs/msg/point_cloud.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 
 #include "estimator.h"
 #include "parameters.h"
@@ -19,6 +21,7 @@
 
 Estimator estimator;
 rclcpp::Node::SharedPtr g_node;//给free function里用到的logger
+rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr g_diag_pub;
 
 std::condition_variable con;
 double current_time = -1;
@@ -338,7 +341,19 @@ void imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
     if (toSec(imu_msg->header.stamp) <= last_imu_t)
     {
-        ROS_WARN("imu message in disorder!!!!!!!!!!!!!!!!!!!!!!!!!");
+        // Measured on the DAVIS346 setup: every one of these is an exact duplicate stamp (dt == 0) of the
+        // previous sample, never a backwards step; the check drops it, so only report a throttled summary.
+        static size_t n_dup = 0, n_back = 0;
+        static auto t_last_report = std::chrono::steady_clock::now();
+        if (toSec(imu_msg->header.stamp) == last_imu_t) ++n_dup; else ++n_back;
+        auto now = std::chrono::steady_clock::now();
+        if (now - t_last_report > std::chrono::seconds(5))
+        {
+            ROS_WARN("dropped IMU samples in last 5 s: %zu duplicate-stamp, %zu backwards (last: stamp - last = %.3f ms)",
+                     n_dup, n_back, (toSec(imu_msg->header.stamp) - last_imu_t) * 1e3);
+            n_dup = n_back = 0;
+            t_last_report = now;
+        }
         return;
     }
     last_imu_t = toSec(imu_msg->header.stamp);
@@ -920,6 +935,15 @@ void process_pointline_image()
             }
 
             estimator.processImage(image,event,lines, img_msg->header); // 把点状特征也加入进行处理。
+            {   // diagnostics: [solver_flag, td, ba(3), bg(3), ric ypr(3), tic(3)] of the newest window frame
+                std_msgs::msg::Float64MultiArray d;
+                const Eigen::Vector3d ypr = Utility::R2ypr(estimator.ric[0]);
+                d.data = {(double)estimator.solver_flag, estimator.td,
+                          estimator.Bas[WINDOW_SIZE].x(), estimator.Bas[WINDOW_SIZE].y(), estimator.Bas[WINDOW_SIZE].z(),
+                          estimator.Bgs[WINDOW_SIZE].x(), estimator.Bgs[WINDOW_SIZE].y(), estimator.Bgs[WINDOW_SIZE].z(),
+                          ypr.x(), ypr.y(), ypr.z(), estimator.tic[0].x(), estimator.tic[0].y(), estimator.tic[0].z()};
+                g_diag_pub->publish(d);
+            }
 
 
              // 一些打印以及topic的发送
@@ -977,6 +1001,7 @@ int main(int argc, char **argv)
     auto sub_relo_points = g_node->create_subscription<sensor_msgs::msg::PointCloud>("/pose_graph/match_points", reliable_qos, relocalization_callback);//回环检测由pose_graph发过来的。重定位（ 回环检测的fast relocalization响应）
 
     auto gt_pose_sub_ = g_node->create_subscription<geometry_msgs::msg::PoseStamped>("/mavros/vision_pose/pose", rclcpp::QoS(1), GTCallback);//订阅GT然后发布
+    g_diag_pub = g_node->create_publisher<std_msgs::msg::Float64MultiArray>("~/diag", 10);//诊断：bias/td/外参
 
     // std::thread measurement_process{process};//额外开了一个线程（核心处理线程）
     // std::thread measurement_process{process_pointline};//点特征与线特征的版本

@@ -16,6 +16,9 @@
 #include <tuple>
 
 #define SHOW_UNDISTORTION 0
+// Max gap between event packets before declaring a stream discontinuity. Upstream used 1.0 s,
+// which fires spuriously when the camera is still (few events); a true stall is still caught.
+static const double EVENT_GAP_RESET_S = 5.0;
 
 vector<uchar> r_status;
 vector<float> r_err;
@@ -182,7 +185,7 @@ void eventsCallback(const dvs_msgs::msg::EventArray &event_msg)//img_msg没有�
     // detect unstable camera stream
      // 检查时间戳是否正常，这里认为超过一秒或者错乱就异常
     // 图像时间差太多光流追踪就会失败，这里没有描述子匹配，因此对时间戳要求就高
-    if (event_msg.events[0].ts - last_image_time > 1.0 || event_msg.events[0].ts < last_image_time)
+    if (event_msg.events[0].ts - last_image_time > EVENT_GAP_RESET_S || event_msg.events[0].ts < last_image_time)
     {
         ROS_WARN("event stream discontinue! reset the feature tracker!");
         // 一些常规的reset操作

@@ -30,9 +30,9 @@ def generate_launch_description():
                    description="base folder PL-EVIO resolves a few relative paths against"),
         LaunchArg("camera_name", default_value="davis346",
                    description="namespace the DAVIS346 driver publishes under"),
-        LaunchArg("auto_exposure", default_value="true",
+        LaunchArg("auto_exposure", default_value="false",
                    description="DAVIS346 APS auto-exposure; set false to use a fixed aps_exposure"),
-        LaunchArg("aps_exposure", default_value="100000",
+        LaunchArg("aps_exposure", default_value="32145",
                    description="fixed APS exposure in microseconds (only used when auto_exposure:=false)"),
 
         # --- DAVIS346 driver + visualization ---
